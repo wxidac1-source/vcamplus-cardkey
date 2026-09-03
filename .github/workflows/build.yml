@@ -2,60 +2,59 @@ name: Build VCam Plus CardKey
 
 on:
   push:
-      branches: [ main ]
-        workflow_dispatch:
+    branches: [ main ]
+  workflow_dispatch:
 
-        permissions:
-          contents: write
+permissions:
+  contents: write
 
-          env:
-            THEOS: /opt/theos
+env:
+  THEOS: /opt/theos
 
-            jobs:
-              build:
-                  runs-on: macos-14
+jobs:
+  build:
+    runs-on: macos-14
 
-                      steps:
-                            - name: Checkout
-                                    uses: actions/checkout@v4
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-                                          - name: Install build dependencies
-                                                  run: brew install ldid xz
+      - name: Install build dependencies
+        run: brew install ldid xz
 
-                                                        - name: Clone Theos
-                                                                run: |
-                                                                          for i in 1 2 3 4 5; do
-                                                                                      sudo rm -rf $THEOS
-                                                                                                  if sudo git clone --recursive https://github.com/theos/theos $THEOS; then
-                                                                                                                echo "Theos cloned on attempt $i"
-                                                                                                                              break
-                                                                                                                                          fi
-                                                                                                                                                      sleep 10
-                                                                                                                                                                done
-                                                                                                                                                                          sudo chown -R "$USER" $THEOS
-                                                                                                                                                                          
-                                                                                                                                                                                - name: Download iOS 16.5 SDK
-                                                                                                                                                                                        run: |
-                                                                                                                                                                                                  curl -L -o sdk.tar.xz https://github.com/theos/sdks/releases/download/master-146e41f/iPhoneOS16.5.sdk.tar.xz
-                                                                                                                                                                                                            tar -xf sdk.tar.xz -C $THEOS/sdks/
-                                                                                                                                                                                                            
-                                                                                                                                                                                                                  - name: Build package
-                                                                                                                                                                                                                          run: |
-                                                                                                                                                                                                                                    make package FINALPACKAGE=1 STRIP=1
-                                                                                                                                                                                                                                              ls -la packages/
-                                                                                                                                                                                                                                              
-                                                                                                                                                                                                                                                    - name: Upload deb artifact
-                                                                                                                                                                                                                                                            uses: actions/upload-artifact@v4
-                                                                                                                                                                                                                                                                    with:
-                                                                                                                                                                                                                                                                              name: vcamplus-deb
-                                                                                                                                                                                                                                                                                        path: packages/*.deb
-                                                                                                                                                                                                                                                                                        
-                                                                                                                                                                                                                                                                                              - name: Create Release with deb
-                                                                                                                                                                                                                                                                                                      uses: softprops/action-gh-release@v2
-                                                                                                                                                                                                                                                                                                              with:
-                                                                                                                                                                                                                                                                                                                        tag_name: build-${{ github.run_number }}
-                                                                                                                                                                                                                                                                                                                                  name: VCamPlus CardKey Build ${{ github.run_number }}
-                                                                                                                                                                                                                                                                                                                                            files: packages/*.deb
-                                                                                                                                                                                                                                                                                                                                                    env:
-                                                                                                                                                                                                                                                                                                                                                              GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                                                                                                                                                                                                                                                                                                                                                              
+      - name: Clone Theos
+        run: |
+          for i in 1 2 3 4 5; do
+            sudo rm -rf $THEOS
+            if sudo git clone --recursive https://github.com/theos/theos $THEOS; then
+              echo "Theos cloned on attempt $i"
+              break
+            fi
+            sleep 10
+          done
+          sudo chown -R "$USER" $THEOS
+
+      - name: Download iOS 16.5 SDK
+        run: |
+          curl -L -o sdk.tar.xz https://github.com/theos/sdks/releases/download/master-146e41f/iPhoneOS16.5.sdk.tar.xz
+          tar -xf sdk.tar.xz -C $THEOS/sdks/
+
+      - name: Build package
+        run: |
+          make package FINALPACKAGE=1 STRIP=1
+          ls -la packages/
+
+      - name: Upload deb artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vcamplus-deb
+          path: packages/*.deb
+
+      - name: Create Release with deb
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: VCamPlus CardKey Build ${{ github.run_number }}
+          files: packages/*.deb
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
