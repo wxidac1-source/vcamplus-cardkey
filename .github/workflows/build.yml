@@ -41,8 +41,8 @@ jobs:
 
       - name: Validate and build package
         run: |
-          chmod +x preinst postinst postrm || true
-          for s in preinst postinst postrm; do echo "== sh -n $s =="; sh -n "$s" || exit 1; done
+          chmod +x layout/DEBIAN/preinst layout/DEBIAN/postinst layout/DEBIAN/postrm || true
+          for s in layout/DEBIAN/preinst layout/DEBIAN/postinst layout/DEBIAN/postrm; do echo "== sh -n $s =="; sh -n "$s" || exit 1; done
           make package FINALPACKAGE=1 STRIP=1
           ls -la packages/
 
