@@ -1,4 +1,4 @@
-name: Build VCam Plus CardKey
+name: Build MAXUI (Magic Camera)
 
 on:
   push:
@@ -39,22 +39,24 @@ jobs:
           curl -L -o sdk.tar.xz https://github.com/theos/sdks/releases/download/master-146e41f/iPhoneOS16.5.sdk.tar.xz
           tar -xf sdk.tar.xz -C $THEOS/sdks/
 
-      - name: Build package
+      - name: Validate and build package
         run: |
+          chmod +x preinst postinst postrm || true
+          for s in preinst postinst postrm; do echo "== sh -n $s =="; sh -n "$s" || exit 1; done
           make package FINALPACKAGE=1 STRIP=1
           ls -la packages/
 
       - name: Upload deb artifact
         uses: actions/upload-artifact@v4
         with:
-          name: vcamplus-deb
+          name: maxui-deb
           path: packages/*.deb
 
       - name: Create Release with deb
         uses: softprops/action-gh-release@v2
         with:
           tag_name: build-${{ github.run_number }}
-          name: VCamPlus CardKey Build ${{ github.run_number }}
+          name: MAXUI Build ${{ github.run_number }}
           files: packages/*.deb
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
