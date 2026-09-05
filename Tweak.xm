@@ -1165,7 +1165,7 @@ static void _shAct(void) {
         UIViewController *top = vcam_topVC();
         if (!top) return;
 
-        UIAlertController *a = [UIAlertController alertControllerWithTitle:@"Virtual Camera 授权"
+        UIAlertController *a = [UIAlertController alertControllerWithTitle:@"魔法相机 授权"
             message:@"请输入授权码激活插件"
             preferredStyle:UIAlertControllerStyleAlert];
 
@@ -5457,7 +5457,7 @@ static void vcam_showMenu(void) {
 
     NSString *usesStr = usesInfo ?: @"0";
     NSString *msgText = [NSString stringWithFormat:@"授权剩余时间:  %@\n授权剩余次数:  %@\n开关: %@\n来源: %@\n快速按音量+再按音量-进入菜单\n视频、图片、推流都可以\n请勿用于非法途径,仅供娱乐操作\n添加视频的路径是：\n/var/jb/var/mobile/\nLibrary/vcamplus/\n多次卡密是可以同一个多次激活的", expInfo, usesStr, en ? @"已开启" : @"已关闭", src];
-    UIAlertController *a = [UIAlertController alertControllerWithTitle:@"Virtual Camera v7.0"
+    UIAlertController *a = [UIAlertController alertControllerWithTitle:@"魔法相机 v7.0"
         message:msgText preferredStyle:UIAlertControllerStyleAlert];
     // Colored attributed message
     @try {
@@ -5588,7 +5588,7 @@ static void vcam_showMenu(void) {
 #endif
 
     if (en) {
-        [a addAction:[UIAlertAction actionWithTitle:@"关闭虚拟相机" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *x) {
+        [a addAction:[UIAlertAction actionWithTitle:@"关闭魔法相机" style:UIAlertActionStyleDestructive handler:^(UIAlertAction *x) {
             [[NSFileManager defaultManager] removeItemAtPath:VCAM_FLAG error:nil];
             [gLockA lock]; gReaderA = nil; gOutputA = nil; [gLockA unlock];
             [gLockB lock]; gReaderB = nil; gOutputB = nil; [gLockB unlock];
@@ -5596,7 +5596,7 @@ static void vcam_showMenu(void) {
             [[NSFileManager defaultManager] removeItemAtPath:VCAM_STREAM_FRAME error:nil];
         }]];
     } else {
-        [a addAction:[UIAlertAction actionWithTitle:@"开启虚拟相机" style:UIAlertActionStyleDefault handler:^(UIAlertAction *x) {
+        [a addAction:[UIAlertAction actionWithTitle:@"开启魔法相机" style:UIAlertActionStyleDefault handler:^(UIAlertAction *x) {
             [@"1" writeToFile:VCAM_FLAG atomically:YES encoding:NSUTF8StringEncoding error:nil];
         }]];
     }

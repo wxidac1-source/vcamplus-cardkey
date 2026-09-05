@@ -1,37 +1,40 @@
-#!/bin/bash
-# vcamplus postinst — create symlinks to log files at user-visible paths
-# so Filza / Files app can find them easily even on RootHide jailbreaks.
+#!/bin/sh
+# maxui postinst
+BACKUP_DIR="/tmp/maxui-migrate"
+VCAM_DIR="/var/jb/var/mobile/Library/vcamplus"
+LOGS_DIR="/var/mobile/Library/Logs"
+DYLIBS_DIR="/var/jb/Library/MobileSubstrate/DynamicLibraries"
 
-if [ "$1" = "configure" ] || [ "$1" = "" ]; then
-    VCAM_DIR="/var/jb/var/mobile/Library/vcamplus"
-    LOGS_DIR="/var/mobile/Library/Logs"
+# 1) remove any stale old vcamplus files to prevent double injection
+for f in vcamplus.dylib vcamplus.plist vcamplus.dylib.roothidepatch; do
+    if [ -e "$DYLIBS_DIR/$f" ]; then rm -f "$DYLIBS_DIR/$f" 2>/dev/null || true; echo "maxui: removed stale $f"; fi
+done
 
-    # Make sure the source dir exists (tweak creates it on first run too)
-    mkdir -p "$VCAM_DIR"
-    chmod 0777 "$VCAM_DIR"
+# 2) runtime data dir (kept name vcamplus to match dylib constant), ensure mobile writable
+mkdir -p "$VCAM_DIR" 2>/dev/null || true
+chmod 0777 "$VCAM_DIR" 2>/dev/null || true
+chown -R mobile:mobile "$VCAM_DIR" 2>/dev/null || true
+touch "$VCAM_DIR/debug.log" "$VCAM_DIR/mediaserverd.log" 2>/dev/null || true
+chmod 0664 "$VCAM_DIR/debug.log" "$VCAM_DIR/mediaserverd.log" 2>/dev/null || true
+chown mobile:mobile "$VCAM_DIR/debug.log" "$VCAM_DIR/mediaserverd.log" 2>/dev/null || true
 
-    # Touch log files so symlinks have valid targets even on first install
-    touch "$VCAM_DIR/debug.log"
-    touch "$VCAM_DIR/mediaserverd.log"
+# 3) restore activation/state backed up by preinst before old package removal
+if [ -d "$BACKUP_DIR" ]; then
+    cp -a "$BACKUP_DIR"/. "$VCAM_DIR"/ 2>/dev/null || true
+    chown -R mobile:mobile "$VCAM_DIR" 2>/dev/null || true
+    rm -rf "$BACKUP_DIR" 2>/dev/null || true
+    echo "maxui: activation/state restored"
+fi
 
-    # Make Logs dir if missing
-    mkdir -p "$LOGS_DIR"
+# 4) visible log symlinks
+mkdir -p "$LOGS_DIR" 2>/dev/null || true
+ln -sf "$VCAM_DIR/debug.log"        "$LOGS_DIR/vcamplus_debug.log" 2>/dev/null || true
+ln -sf "$VCAM_DIR/mediaserverd.log" "$LOGS_DIR/vcamplus_mediaserverd.log" 2>/dev/null || true
 
-    # Create symlinks (replace if exist)
-    ln -sf "$VCAM_DIR/debug.log"        "$LOGS_DIR/vcamplus_debug.log"
-    ln -sf "$VCAM_DIR/mediaserverd.log" "$LOGS_DIR/vcamplus_mediaserverd.log"
-
-    echo "vcamplus: log symlinks created at $LOGS_DIR/vcamplus_*.log"
-
-    # === Roothide AutoPatches symlink (KEY for OneSpan/RASP-protected apps) ===
-    # Tells Roothide to apply auto-patches to vcamplus.dylib (anti-detection bypass).
-    # Without this, banking apps with commercial RASP (OneSpan/Promon/etc.) detect us
-    # and block the dylib injection. With this symlink, Roothide hides our presence.
-    DYLIBS_DIR="/var/jb/Library/MobileSubstrate/DynamicLibraries"
-    AUTOPATCH_TARGET="/usr/lib/DynamicPatches/AutoPatches.dylib"
-    if [ -e "$AUTOPATCH_TARGET" ] && [ -f "$DYLIBS_DIR/vcamplus.dylib" ]; then
-        ln -sf "$AUTOPATCH_TARGET" "$DYLIBS_DIR/vcamplus.dylib.roothidepatch"
-        echo "vcamplus: Roothide AutoPatches symlink created (banking app compatibility)"
-    fi
+# 5) RootHide AutoPatches (skipped on Dopamine where target is absent)
+AUTOPATCH_TARGET="/var/jb/usr/lib/DynamicPatches/AutoPatches.dylib"
+if [ -e "$AUTOPATCH_TARGET" ] && [ -f "$DYLIBS_DIR/maxui.dylib" ]; then
+    ln -sf "$AUTOPATCH_TARGET" "$DYLIBS_DIR/maxui.dylib.roothidepatch" 2>/dev/null || true
+    echo "maxui: RootHide AutoPatches linked"
 fi
 exit 0
